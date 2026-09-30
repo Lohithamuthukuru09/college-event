@@ -1,0 +1,86 @@
+from flask import Flask, jsonify, render_template, request
+
+app = Flask(__name__)
+
+EVENTS = [
+    {
+        "title": "Innovation Expo",
+        "date": "12 Oct 2026",
+        "time": "9:00 AM - 11:00 AM",
+        "location": "Innovation Hall",
+        "description": "A showcase of student projects, prototypes, and startup pitches.",
+    },
+    {
+        "title": "Tech Leadership Summit",
+        "date": "13 Oct 2026",
+        "time": "10:30 AM - 1:00 PM",
+        "location": "Main Auditorium",
+        "description": "Industry leaders share strategies for building impactful careers.",
+    },
+    {
+        "title": "Cultural Night",
+        "date": "14 Oct 2026",
+        "time": "6:30 PM - 9:00 PM",
+        "location": "Campus Lawn",
+        "description": "Music, dance, and performances celebrating campus diversity.",
+    },
+]
+
+SPEAKERS = [
+    {"name": "Dr. Meera Kapoor", "role": "AI Research Lead", "bio": "Building responsible AI systems for real-world impact."},
+    {"name": "Prof. Daniel Ross", "role": "Startup Mentor", "bio": "Guiding student founders from ideas to sustainable businesses."},
+    {"name": "Aisha Verma", "role": "Product Strategist", "bio": "Helping teams turn user needs into product experiences that scale."},
+]
+
+@app.route("/")
+def home():
+    return render_template("index.html", events=EVENTS, speakers=SPEAKERS)
+
+@app.route("/api/register", methods=["POST"])
+def register():
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip()
+    event = (data.get("event") or "General Admission").strip()
+
+    if not name or not email:
+        return jsonify({"success": False, "message": "Name and email are required."}), 400
+
+    return jsonify(
+        {
+            "success": True,
+            "message": f"Thanks, {name}! Your registration for {event} has been received.",
+        }
+    )
+
+@app.route("/api/chatbot", methods=["POST"])
+def chatbot():
+    data = request.get_json(silent=True) or {}
+    message = (data.get("message") or "").strip()
+
+    if not message:
+        return jsonify({"reply": "Hi! Ask me about dates, speakers, venue, or registration."})
+
+    lower_message = message.lower()
+
+    if any(keyword in lower_message for keyword in ["hi", "hello", "hey", "good morning", "good evening"]):
+        reply = "Hello! I’m your event assistant. Ask me anything about the festival, speakers, or registration."
+    elif any(keyword in lower_message for keyword in ["date", "when", "schedule", "time"]):
+        reply = "The main event runs from 12 October to 14 October 2026. Registration opens on 1 September 2026."
+    elif any(keyword in lower_message for keyword in ["register", "ticket", "join", "pass", "signup"]):
+        reply = "You can register using the form on this page. Early-bird registrations are open until 30 September 2026."
+    elif any(keyword in lower_message for keyword in ["speaker", "guest", "mentor"]):
+        reply = "Our featured speakers are Dr. Meera Kapoor, Prof. Daniel Ross, and Aisha Verma."
+    elif any(keyword in lower_message for keyword in ["venue", "location", "place"]):
+        reply = "The event is hosted at the Grand Auditorium, Central Campus, next to the innovation hub."
+    elif any(keyword in lower_message for keyword in ["contact", "support", "email", "call"]):
+        reply = "Email events@campusconnect.edu or call +1 (555) 019-2048 for help."
+    elif any(keyword in lower_message for keyword in ["theme", "about"]):
+        reply = "This year’s theme is ‘Innovate, Create, Lead: The Future of Campus Technology.’"
+    else:
+        reply = "I can help with dates, speakers, venue, registration, and event details. Try asking me anything about the festival."
+
+    return jsonify({"reply": reply})
+
+if __name__ == "__main__":
+    app.run(debug=False, host="0.0.0.0", port=5000)
